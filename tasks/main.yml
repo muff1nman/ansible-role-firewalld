@@ -1,0 +1,53 @@
+---
+- name: Install Firewalld
+  package:
+    name: firewalld
+- name: Install python firewalld
+  package:
+    name: python3-firewall
+  when: ansible_distribution != 'RedHat' or ansible_distribution_major_version != '7'
+# python-firewall is not currently needed for centos as it seems this package
+# was not yet split
+
+- name: Check if iptables services is installed
+  command: rpm -q iptables-services
+  register: iptables_services_rpm_check
+  failed_when: "false"
+  changed_when: "false"
+- block:
+  - name: Ensure Iptables is disabled
+    service:
+      name: iptables
+      state: stopped
+      enabled: no
+  - name: Mask Iptables
+    file:
+      path: /etc/systemd/system/iptables.service
+      state: link
+      src: /dev/null
+  when: iptables_services_rpm_check.rc == 0
+- stat:
+    path: /etc/systemd/system/firewalld.service
+  register: firewalld_service
+- name: Remove mask for firewalld
+  file:
+    path: /etc/systemd/system/firewalld.service
+    state: absent
+  when: firewalld_service.stat.exists and firewalld_service.stat.islnk and firewalld_service.stat.lnk_source == "/dev/null"
+  register: systemd_result
+- name: Reload systemd
+  command: systemctl daemon-reload
+  when: systemd_result.changed
+- name: Start and enable firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+- name: "Create zone {{ item }}"
+  firewalld:
+    zone: "{{ item }}"
+    state: present
+    permanent: true
+  with_items: "{{ firewalld_zones }}"
+  notify: [ "firewalld" ]
+- meta: flush_handlers
