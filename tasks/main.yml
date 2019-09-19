@@ -26,7 +26,8 @@
       state: link
       src: /dev/null
   when: iptables_services_rpm_check.rc == 0
-- stat:
+- name: Check for firewalld.service
+  stat:
     path: /etc/systemd/system/firewalld.service
   register: firewalld_service
 - name: Remove mask for firewalld
