@@ -5,7 +5,7 @@
 - name: Install python firewalld
   package:
     name: python3-firewall
-  when: ansible_distribution != 'RedHat' or ansible_distribution_major_version != '7'
+  when: ansible_os_family != 'RedHat' or ansible_distribution_major_version != '7'
 # python-firewall is not currently needed for centos as it seems this package
 # was not yet split
 
