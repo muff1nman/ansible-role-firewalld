@@ -52,3 +52,8 @@
   with_items: "{{ firewalld_zones }}"
   notify: [ "firewalld" ]
 - meta: flush_handlers
+- name: add additional direct rules
+  template:
+    src: direct.xml
+    dest: /etc/firewalld/direct.xml
+  notify: [ "firewalld" ]
